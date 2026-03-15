@@ -22,6 +22,7 @@ export default async function AdminTransactionsPage() {
           <thead>
             <tr>
               <th>Created</th>
+              <th>Mobile Number</th>
               <th>Amount</th>
               <th>Currency</th>
               <th>Status</th>
@@ -34,12 +35,13 @@ export default async function AdminTransactionsPage() {
           <tbody>
             {transactions.length === 0 ? (
               <tr>
-                <td colSpan={8}>No transactions yet.</td>
+                <td colSpan={9}>No transactions yet.</td>
               </tr>
             ) : (
               transactions.map((transaction) => (
                 <tr key={transaction.id}>
                   <td>{transaction.createdAt.toLocaleString()}</td>
+                  <td>{transaction.mobileNumber ?? "-"}</td>
                   <td>{formatAmount(transaction.amount, transaction.currency)}</td>
                   <td>{transaction.currency.toUpperCase()}</td>
                   <td>

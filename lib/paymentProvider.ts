@@ -7,10 +7,11 @@ export type CheckoutSessionPayload = {
 };
 
 export type PaymentProvider = {
-  createCheckoutSession(): Promise<CheckoutSessionPayload>;
+  createCheckoutSession(mobileNumber: string): Promise<CheckoutSessionPayload>;
 };
 
 export type UpsertTransactionInput = {
+  mobileNumber?: string | null;
   providerSessionId: string;
   providerPaymentIntentId?: string | null;
   customerEmail?: string | null;

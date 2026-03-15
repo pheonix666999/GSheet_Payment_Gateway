@@ -9,9 +9,15 @@ export const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
 });
 
 export const stripePaymentProvider: PaymentProvider = {
-  async createCheckoutSession(): Promise<CheckoutSessionPayload> {
+  async createCheckoutSession(mobileNumber: string): Promise<CheckoutSessionPayload> {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
+      phone_number_collection: {
+        enabled: true
+      },
+      metadata: {
+        mobileNumber
+      },
       success_url: `${env.APP_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${env.APP_URL}/cancel`,
       line_items: [

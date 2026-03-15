@@ -4,6 +4,7 @@ import { env } from "@/lib/env";
 
 type GoogleSheetTransactionRow = {
   timestamp: string;
+  mobileNumber: string | null;
   amount: number;
   currency: string;
   status: string;
@@ -94,7 +95,7 @@ export async function appendTransactionToGoogleSheet(row: GoogleSheetTransaction
   const accessToken = await getGoogleAccessToken();
 
   const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/A:H:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/A:I:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
     {
       method: "POST",
       headers: {
@@ -105,6 +106,7 @@ export async function appendTransactionToGoogleSheet(row: GoogleSheetTransaction
         values: [
           [
             row.timestamp,
+            row.mobileNumber ?? "",
             (row.amount / 100).toFixed(2),
             row.currency.toUpperCase(),
             row.status,

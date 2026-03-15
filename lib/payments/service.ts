@@ -9,19 +9,37 @@ import { transactionStatuses } from "@/lib/payments/status";
 import { stripe } from "@/lib/stripe";
 import type { UpsertTransactionInput } from "@/lib/paymentProvider";
 
-export async function createCheckoutSession() {
+function normalizeMobileNumber(mobileNumber: string) {
+  const trimmed = mobileNumber.trim();
+  const normalized = trimmed.startsWith("+")
+    ? `+${trimmed.slice(1).replace(/\D/g, "")}`
+    : trimmed.replace(/\D/g, "");
+
+  const digitCount = normalized.replace(/\D/g, "").length;
+
+  if (digitCount < 7 || digitCount > 15) {
+    throw new Error("Please enter a valid mobile number.");
+  }
+
+  return normalized;
+}
+
+export async function createCheckoutSession(mobileNumber: string) {
+  const normalizedMobileNumber = normalizeMobileNumber(mobileNumber);
   const provider = getPaymentProvider();
-  const { providerSessionId, url } = await provider.createCheckoutSession();
+  const { providerSessionId, url } = await provider.createCheckoutSession(normalizedMobileNumber);
 
   await prisma.transaction.upsert({
     where: { providerSessionId },
     update: {
+      mobileNumber: normalizedMobileNumber,
       amount: AMOUNT_CENTS,
       currency: CURRENCY,
       provider: PAYMENT_PROVIDER,
       status: transactionStatuses.pending
     },
     create: {
+      mobileNumber: normalizedMobileNumber,
       amount: AMOUNT_CENTS,
       currency: CURRENCY,
       provider: PAYMENT_PROVIDER,
@@ -69,6 +87,7 @@ export async function recordStripeEventProcessed(
 
 export async function upsertTransactionFromStripeEvent(input: UpsertTransactionInput) {
   const baseData = {
+    mobileNumber: input.mobileNumber ?? null,
     amount: AMOUNT_CENTS,
     currency: CURRENCY,
     provider: PAYMENT_PROVIDER,
@@ -90,7 +109,13 @@ export async function handleCheckoutSessionCompleted(
   session: Stripe.Checkout.Session,
   eventId: string
 ) {
+  const mobileNumber =
+    typeof session.metadata?.mobileNumber === "string"
+      ? normalizeMobileNumber(session.metadata.mobileNumber)
+      : session.customer_details?.phone ?? null;
+
   const transaction = await upsertTransactionFromStripeEvent({
+    mobileNumber,
     providerSessionId: session.id,
     providerPaymentIntentId:
       typeof session.payment_intent === "string" ? session.payment_intent : null,
@@ -102,6 +127,7 @@ export async function handleCheckoutSessionCompleted(
   try {
     await appendTransactionToGoogleSheet({
       timestamp: transaction.updatedAt.toISOString(),
+      mobileNumber: transaction.mobileNumber ?? null,
       amount: transaction.amount,
       currency: transaction.currency,
       status: transaction.status,

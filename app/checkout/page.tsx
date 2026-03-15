@@ -7,7 +7,8 @@ export default function CheckoutPage() {
       <h2>Pay $0.99 USD</h2>
       <p>
         The amount is fixed on the server and cannot be changed from the client.
-        Stripe Checkout collects the payment details directly, so no card data is stored here.
+        Enter the customer mobile number first. Stripe Checkout then collects the payment
+        details directly, so no card data is stored here.
       </p>
       <CheckoutButton />
     </section>

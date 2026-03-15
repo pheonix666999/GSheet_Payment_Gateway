@@ -4,6 +4,7 @@ import { useState } from "react";
 
 export function CheckoutButton() {
   const [loading, setLoading] = useState(false);
+  const [mobileNumber, setMobileNumber] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   async function handleCheckout() {
@@ -11,8 +12,16 @@ export function CheckoutButton() {
     setError(null);
 
     try {
+      if (!mobileNumber.trim()) {
+        throw new Error("Mobile number is required.");
+      }
+
       const response = await fetch("/api/payments/checkout-session", {
-        method: "POST"
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ mobileNumber })
       });
 
       const data = (await response.json()) as { error?: string; url?: string };
@@ -30,6 +39,19 @@ export function CheckoutButton() {
 
   return (
     <div className="stack">
+      <label className="field">
+        <span>Mobile Number</span>
+        <input
+          className="input"
+          type="tel"
+          name="mobileNumber"
+          placeholder="+1 555 123 4567"
+          autoComplete="tel"
+          value={mobileNumber}
+          onChange={(event) => setMobileNumber(event.target.value)}
+          disabled={loading}
+        />
+      </label>
       <button type="button" className="button" onClick={handleCheckout} disabled={loading}>
         {loading ? "Redirecting..." : "Pay $0.99"}
       </button>

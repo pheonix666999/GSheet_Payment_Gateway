@@ -9,6 +9,7 @@ datasource db {
 
 model Transaction {
   id                      String            @id @default(cuid())
+  mobileNumber            String?
   amount                  Int
   currency                String
   status                  String            @default("pending")
